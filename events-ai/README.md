@@ -7,5 +7,5 @@ predictions and to create Tensor Flow models to create custom timelines for each
 new event. The front end is made more reactive with Node.js, HTML, Tailwind.CSS,
 and Next.js.
 
-Made By:
-![Madison's Signature](./images/madisonsignature.png) "Madison Vanderbilt"
+Made By:__
+![Madison's Signature](./images/madisonsignature.png)__ Madison Vanderbilt
