@@ -4,6 +4,7 @@ import typing
 from bs4 import BeautifulSoup
 import html2text
 
+
 eventTypes: dict[str, list[str]] = {"weddings": ["https://www.brides.com/story/brides-wedding-checklist-custom-wedding-to-do-list", 
                            "https://www.theknot.com/content/12-month-wedding-planning-countdown",
                            "https://www.minted.com/gifts/wedding-planning-checklist",
@@ -69,8 +70,45 @@ DATE_TRIGGERS = upperFirstCase([
     "interval", "duration", "span", "seconds"
 ])
 
-PREP_TIME_TRIGGERS = upperFirstCase(["before", "after", "during", "by", "until", "since", "from", "for", 
-    "at", "on", "in", "throughout", "past", "within"])
+PREP_TIME_TRIGGERS = upperFirstCase(["before", "after", "during", "for", 
+    "at", "on", "in", "throughout", "past", "out", "of"])
+
+PUNCTUATION = [
+    ".", "?", "!", "'", "\"", 
+    "{", "}", "/", "\\", "|", "@", "#", "$", "%", "^", "&", "*", "_", "~", "`",
+    ">", "<"
+]
+
+def isFullSentence(sentence: list[str]) -> bool:
+    """
+    defining a complete sentence by if a word ends with any of the puntioan above
+
+    also checks to see if there is some non sensical punctuation
+    """
+    endingPunctuation: list[str] = [".", "?", "!"]
+    for each in sentence:
+        if each[-1] in endingPunctuation:
+            return True
+        for letter in each:
+            if letter in PUNCTUATION:
+                return True
+    return False
+
+def checkTigger(sentence: list[str], trigger: list[str]) -> bool:
+    '''
+    checks to see if the sentence contains one of the date triggers defined above
+
+    inputs:
+    sentence - list of strings
+
+    trigger - list of strings to determine if a string in sentence matches
+
+    returns True if there is a word in triggers, false otherwise
+    '''
+    for word in sentence:
+        if word in trigger:
+            return True
+    return False
 
 
 statements = {}
@@ -121,13 +159,21 @@ for event, web_content in statements.items():
     for web_section in web_content:
         for sentence in web_section:
             words = list(str(sentence).split(" "))
-            for word in words:
-                if word in DATE_TRIGGERS:
-                    eventTimelineEvents[event].append({current_key: current_timeline})
-                    current_key = sentence
-                    current_timeline = []
+            if checkTigger(words, DATE_TRIGGERS) and checkTigger(words, NUMBER_TRIGGERS) \
+            and not isFullSentence(words) and checkTigger(words, PREP_TIME_TRIGGERS):
+                eventTimelineEvents[event].append({current_key: current_timeline})
+                current_key = sentence
+                current_timeline = []
             if current_key is not None and sentence != current_key:
                 current_timeline.append(sentence)
+
+print(eventTimelineEvents["weddings"])
+   
+
+
+
+
+
 '''
 Things to check before creating a new key
 
@@ -138,21 +184,8 @@ Optional
 - prepositions
 '''
 
-def checkTigger(sentence: list[str], trigger: list[str]) -> bool:
-    '''
-    checks to see if the sentence contains one of the date triggers defined above
 
-    inputs:
-    sentence - list of strings
 
-    trigger - list of strings to determine if a string in sentence matches
-
-    returns True if there is a word in triggers, false otherwise
-    '''
-    for word in sentence:
-        if word in trigger:
-            return True
-    return False
 
 
 
