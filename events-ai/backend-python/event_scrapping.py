@@ -1,9 +1,10 @@
 from urllib.request import urlopen
 import requests
+import typing
 from bs4 import BeautifulSoup
 import html2text
 
-eventTypes = {"weddings": ["https://www.brides.com/story/brides-wedding-checklist-custom-wedding-to-do-list", 
+eventTypes: dict[str, list[str]] = {"weddings": ["https://www.brides.com/story/brides-wedding-checklist-custom-wedding-to-do-list", 
                            "https://www.theknot.com/content/12-month-wedding-planning-countdown",
                            "https://www.minted.com/gifts/wedding-planning-checklist",
                            "https://assets.minted.com/image/upload/Minted_Onsite_Assets/2022/LP/Wedding/1831_ChecklistMasterClassMindyWeiss.pdf",
@@ -37,28 +38,40 @@ eventTypes = {"weddings": ["https://www.brides.com/story/brides-wedding-checklis
                            "https://yearandday.com/blogs/ourhours/your-dinner-party-checklist?srsltid=AfmBOooCAFzaWx75eRmpK5zFz5hLfY_gEMgok3VsjhHMPYiDwUY2K8J7",
 ]}
 
-date_triggers = [
-    "Day", "Days", "Month", "Months", "Week", "Weeks", "Year", "Years", 
-    "Hour", "Hours", "Minute", "Minutes", "Second", "Seconds", 
-    "Morning", "Afternoon", "Evening", "Night", "Sunrise", "Sunset", 
-    "Noon", "Midnight", "Decade", "Century", "Millennium", "Quarter", 
-    "Fortnight", "Epoch", "Era", "Moment", "Instant", "Phase", 
-    "Period", "Season",   "Chronology", 
-    "Interval", "Duration", "Span", "day", "days", "month", "months", "week",
+
+def upperFirstCase(triggers: list[str]) -> list[str]:
+    '''
+    This function makes a list in which the first letter of a word is 
+    upper case, the whole word uppercase, and the original word
+
+    inputs:
+    triggers - list of strings
+
+    returns
+    list of strings
+    '''
+    triggers_upper = [each[0].upper() + each[1:] for each in triggers.copy()]
+    triggers_caps = [each.upper() for each in triggers.copy()]
+    return triggers + triggers_upper + triggers_caps
+
+NUMBER_TRIGGERS = upperFirstCase([str(i) for i in range(0, 10)] + ["one", "two", "three", "four",
+    "five", "six", "seven", "eight", "nine", "ten","eleven", "twelve", "thirteen",
+    "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty",
+    "twenty-one", "twenty-two", "twenty-three", "twenty-four", "of"])
+
+DATE_TRIGGERS = upperFirstCase([
+    "day", "days", "month", "months", "week",
     "weeks", "year", "years",  "hour", "hours", "minute", "minutes", "second",
     "morning", "afternoon", "evening", "night", "sunrise", "sunset", 
     "noon", "midnight", "decade", "century", "millennium", "quarter", 
     "fortnight", "epoch", "era", "moment", "instant", "phase", 
     "period", "season",   "chronology", 
-    "interval", "duration", "span", "seconds", "DAY", "DAYS", "MONTH",
-    "MONTHS", "WEEK", "WEEKS", "YEAR", "YEARS", 
-    "HOUR", "HOURS", "MINUTE", "MINUTES", "SECOND", "MORNING", 
-    "AFTERNOON", "EVENING", "NIGHT", "SUNRISE", "SUNSET", "NOON", 
-    "MIDNIGHT", "DECADE", "CENTURY", "MILLENNIUM", "QUARTER", 
-    "FORTNIGHT", "EPOCH", "ERA", "MOMENT", "INSTANT", "PHASE", 
-    "PERIOD", "SEASON",   "CHRONOLOGY", 
-    "INTERVAL", "DURATION", "SPAN", "SECONDS"
-]
+    "interval", "duration", "span", "seconds"
+])
+
+PREP_TIME_TRIGGERS = upperFirstCase(["before", "after", "during", "by", "until", "since", "from", "for", 
+    "at", "on", "in", "throughout", "past", "within"])
+
 
 statements = {}
 
@@ -96,7 +109,7 @@ statements, in then spits the list by time tigger
 this information is stored as a dictionary
 '''
 
-eventTimelineEvents = {}
+eventTimelineEvents: dict[str, list[dict[str, str]]] = {}
 for key in statements.keys():
     eventTimelineEvents[key] = []
 
@@ -109,12 +122,37 @@ for event, web_content in statements.items():
         for sentence in web_section:
             words = list(str(sentence).split(" "))
             for word in words:
-                if word in date_triggers:
+                if word in DATE_TRIGGERS:
                     eventTimelineEvents[event].append({current_key: current_timeline})
                     current_key = sentence
                     current_timeline = []
             if current_key is not None and sentence != current_key:
                 current_timeline.append(sentence)
+'''
+Things to check before creating a new key
 
-                
+has some sort of number or of
+has a date trigger
+
+Optional
+- prepositions
+'''
+
+def checkTigger(sentence: list[str], trigger: list[str]) -> bool:
+    '''
+    checks to see if the sentence contains one of the date triggers defined above
+
+    inputs:
+    sentence - list of strings
+
+    trigger - list of strings to determine if a string in sentence matches
+
+    returns True if there is a word in triggers, false otherwise
+    '''
+    for word in sentence:
+        if word in trigger:
+            return True
+    return False
+
+
 
